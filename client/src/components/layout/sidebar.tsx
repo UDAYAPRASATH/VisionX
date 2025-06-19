@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Eye, Home, PlayCircle, GitCompare, Cpu, FileText, Settings, User, MoreHorizontal } from "lucide-react";
+import { Eye, Home, PlayCircle, GitCompare, Cpu, FileText, Settings, User, MoreHorizontal, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ const navigation = [
   { name: "Test Runs", href: "/test-runs", icon: PlayCircle },
   { name: "Visual Diff", href: "/visual-diff", icon: GitCompare },
   { name: "AI Insights", href: "/ai-insights", icon: Cpu },
+  { name: "Test Creator", href: "/test-creator", icon: Plus },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

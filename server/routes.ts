@@ -223,6 +223,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Visual testing endpoints
+  app.post("/api/visual-tests/run", async (req, res) => {
+    try {
+      const { urls } = req.body;
+      if (!urls || !Array.isArray(urls)) {
+        return res.status(400).json({ error: "URLs array is required" });
+      }
+      
+      const { visualTestingService } = await import("./services/visualTestingService");
+      const runId = await visualTestingService.runVisualTests(urls);
+      res.json({ runId, status: "started" });
+    } catch (error) {
+      console.error("Visual test error:", error);
+      res.status(500).json({ error: "Failed to start visual tests" });
+    }
+  });
+
+  app.get("/api/visual-tests/:runId/status", async (req, res) => {
+    try {
+      const { runId } = req.params;
+      const { visualTestingService } = await import("./services/visualTestingService");
+      const status = await visualTestingService.getTestStatus(runId);
+      res.json(status);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get test status" });
+    }
+  });
+
+  app.get("/api/visual-tests/:runId/results", async (req, res) => {
+    try {
+      const { runId } = req.params;
+      const { visualTestingService } = await import("./services/visualTestingService");
+      const results = await visualTestingService.getTestResults(runId);
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get test results" });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

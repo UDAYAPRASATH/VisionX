@@ -21,6 +21,7 @@ export const testRuns = pgTable("test_runs", {
   duration: integer("duration"), // in seconds
   startedAt: timestamp("started_at").defaultNow(),
   completedAt: timestamp("completed_at"),
+  error: text("error"), // error message if failed
   metadata: jsonb("metadata"), // additional test run metadata
 });
 
@@ -30,6 +31,7 @@ export const testResults = pgTable("test_results", {
   testName: text("test_name").notNull(),
   status: text("status").notNull(), // 'passed', 'failed', 'skipped'
   duration: integer("duration"), // in milliseconds
+  error: text("error"), // error message if failed
   baselineImagePath: text("baseline_image_path"),
   actualImagePath: text("actual_image_path"),
   diffImagePath: text("diff_image_path"),
