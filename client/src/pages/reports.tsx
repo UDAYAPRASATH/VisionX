@@ -9,14 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DatePicker } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { formatTimeAgo, formatDuration, formatPercentage } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import type { TestRun, TestResult, DashboardStats } from "@shared/schema";
+import type { TestRun, TestResult } from "@shared/schema";
+import { DashboardStats } from "@/types";
 
 interface Report {
   id: string;
@@ -251,7 +251,7 @@ export default function Reports() {
                             <Checkbox
                               id="screenshots"
                               checked={includeScreenshots}
-                              onCheckedChange={setIncludeScreenshots}
+                              onCheckedChange={(checked) => setIncludeScreenshots(checked === true)}
                             />
                             <Label htmlFor="screenshots">Include Screenshots</Label>
                           </div>
@@ -259,7 +259,7 @@ export default function Reports() {
                             <Checkbox
                               id="ai-insights"
                               checked={includeAIInsights}
-                              onCheckedChange={setIncludeAIInsights}
+                              onCheckedChange={(checked) => setIncludeAIInsights(checked === true)}
                             />
                             <Label htmlFor="ai-insights">Include AI Insights</Label>
                           </div>

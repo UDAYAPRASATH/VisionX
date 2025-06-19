@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,6 +33,8 @@ export default function TestCaseCreator() {
   const [currentUrl, setCurrentUrl] = useState<UrlFormData>({ name: "", url: "" });
   const [isRunning, setIsRunning] = useState(false);
   const [runId, setRunId] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -127,6 +129,20 @@ export default function TestCaseCreator() {
     urlForm.setValue('url', url);
   };
 
+  // Real-time log subscription (SSE example)
+  useEffect(() => {
+    const eventSource = new EventSource("/api/logs");
+    eventSource.onmessage = (event) => {
+      setLogs((prev) => [...prev, event.data]);
+      logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    eventSource.onerror = () => {
+      setLogs((prev) => [...prev, "[error] Lost connection to log stream"]);
+      eventSource.close();
+    };
+    return () => eventSource.close();
+  }, []);
+
   return (
     <MainLayout
       title="Visual Test Creator"
@@ -197,14 +213,34 @@ export default function TestCaseCreator() {
                 <span>Test Suite</span>
                 <Badge variant="secondary">{urls.length} URLs</Badge>
               </div>
-              <Button
-                onClick={runTests}
-                disabled={urls.length === 0 || runTestsMutation.isPending}
-                className="flex items-center space-x-2"
-              >
-                <Play className="h-4 w-4" />
-                <span>{runTestsMutation.isPending ? "Starting..." : "Run Tests"}</span>
-              </Button>
+              <div className="flex items-center">
+                <Button
+                  onClick={runTests}
+                  disabled={urls.length === 0 || runTestsMutation.isPending}
+                  className="flex items-center space-x-2"
+                >
+                  <Play className="h-4 w-4" />
+                  <span>{runTestsMutation.isPending ? "Starting..." : "Run Tests"}</span>
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (currentUrl.url && currentUrl.name) {
+                      runTestsMutation.mutate([{ name: currentUrl.name, url: currentUrl.url }]);
+                    } else {
+                      toast({
+                        title: "No URL Selected",
+                        description: "Please enter a valid URL to run a single test.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                  disabled={!currentUrl.url || runTestsMutation.isPending}
+                  className="flex items-center space-x-2 ml-2"
+                >
+                  <Play className="h-4 w-4" />
+                  <span>Run This URL Only</span>
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -310,6 +346,21 @@ export default function TestCaseCreator() {
               >
                 News Sites
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* On-page Console */}
+        <Card className="visionx-card">
+          <CardHeader>
+            <CardTitle>Execution Console</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-black text-green-400 font-mono text-xs p-2 h-48 overflow-y-auto rounded">
+              {logs.map((log, i) => (
+                <div key={i}>{log}</div>
+              ))}
+              <div ref={logsEndRef} />
             </div>
           </CardContent>
         </Card>

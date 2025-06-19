@@ -45,9 +45,9 @@ export default function Settings() {
 
   // Team settings
   const [teamMembers] = useState([
-    { id: "1", name: "Alex Chen", email: "alex.chen@company.com", role: "Admin", status: "active" },
-    { id: "2", name: "Sarah Kim", email: "sarah.kim@company.com", role: "Developer", status: "active" },
-    { id: "3", name: "Mike Johnson", email: "mike.johnson@company.com", role: "QA", status: "active" },
+    { id: "1", name: "Jagadish", email: "jagadish@company.com", role: "Admin", status: "active" },
+    { id: "2", name: "", email: "sarah.kim@company.com", role: "Developer", status: "active" },
+    { id: "3", name: "", email: "mike.johnson@company.com", role: "QA", status: "active" },
   ]);
 
   const handleSaveProfile = () => {

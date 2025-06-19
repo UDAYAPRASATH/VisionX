@@ -67,8 +67,8 @@ export function Sidebar() {
             <User className="w-4 h-4 text-muted-foreground" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-sidebar-foreground">Alex Chen</p>
-            <p className="text-xs text-muted-foreground">Developer</p>
+            <p className="text-sm font-medium text-sidebar-foreground">VisionX</p>
+            <p className="text-xs text-muted-foreground">Test</p>
           </div>
           <motion.button 
             className="p-1 hover:bg-accent rounded transition-colors"

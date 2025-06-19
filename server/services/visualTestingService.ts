@@ -1,9 +1,9 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { storage } from '../storage';
 import { compareScreenshotsWithGroqLlava } from '../utils/grokClient';
 import { highlightDiff } from '../utils/highlight_diff';
+import { test as runPlaywrightTest, expect, devices, chromium } from '@playwright/test';
 
 export interface TestUrl {
   name: string;
@@ -108,115 +108,83 @@ export class VisualTestingService {
   }
 
   private async captureBaseline(name: string, url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const playwright = spawn('npx', ['playwright', 'test', '--grep', `Capture baseline screenshot for ${name}`], {
-        stdio: 'pipe',
-        env: { ...process.env, TEST_URL: url, TEST_NAME: name }
-      });
-
-      let output = '';
-      playwright.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      playwright.stderr.on('data', (data) => {
-        console.error('Playwright stderr:', data.toString());
-      });
-
-      playwright.on('close', (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Baseline capture failed with code ${code}: ${output}`));
-        }
-      });
-    });
+    // Use Playwright Node API instead of spawn
+    const browser = await chromium.launch({ headless: false });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+    const screenshotPath = path.join('baseline', `${name}.png`);
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+    await browser.close();
   }
 
   private async runComparison(name: string, url: string, runId: string): Promise<VisualTestResult> {
     const startTime = Date.now();
-    
-    try {
-      // Run Playwright comparison test
-      await new Promise<void>((resolve, reject) => {
-        const playwright = spawn('npx', ['playwright', 'test', '--grep', `Compare ${name} screenshot`], {
-          stdio: 'pipe',
-          env: { ...process.env, TEST_URL: url, TEST_NAME: name }
-        });
-
-        playwright.on('close', (code) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject(new Error(`Comparison test failed with code ${code}`));
-          }
-        });
-      });
-
-      const baselinePath = path.join('baseline', `${name}.png`);
-      const currentPath = path.join('current', `${name}.png`);
-      
-      // Check if images exist
-      if (!fs.existsSync(baselinePath) || !fs.existsSync(currentPath)) {
-        throw new Error('Screenshot files not found');
-      }
-
-      // Generate diff image
-      const diffPath = await highlightDiff(baselinePath, currentPath, 'diffimage');
-      
-      // Get AI insights using Groq
-      const aiInsights = await compareScreenshotsWithGroqLlava(
-        baselinePath, 
-        currentPath, 
-        process.env.GROK_API_KEY
-      );
-
-      // Calculate differences (simplified)
-      const pixelDifference = Math.floor(Math.random() * 1000); // Replace with actual calculation
-      const percentageDifference = Math.floor(Math.random() * 10); // Replace with actual calculation
-
-      // Create test result
-      const testResult = await storage.createTestResult({
-        runId,
-        testName: name,
-        status: percentageDifference < 5 ? 'passed' : 'failed',
-        duration: Date.now() - startTime,
-        baselineImagePath: baselinePath,
-        actualImagePath: currentPath,
-        diffImagePath: diffPath,
-        pixelDifference,
-        percentageDifference,
-        aiInsights: { analysis: aiInsights }
-      });
-
-      // Create AI insight
-      await storage.createAiInsight({
-        testResultId: testResult.id,
-        type: 'visual_comparison',
-        title: `Visual Analysis for ${name}`,
-        description: aiInsights,
-        confidence: 85 + Math.floor(Math.random() * 15),
-        severity: percentageDifference > 5 ? 'error' : 'info',
-        metadata: { diffPercentage: percentageDifference }
-      });
-
-      return {
-        testName: name,
-        status: percentageDifference < 5 ? 'passed' : 'failed',
-        baselineImage: baselinePath,
-        actualImage: currentPath,
-        diffImage: diffPath,
-        aiInsights
-      };
-
-    } catch (error) {
-      console.error(`Comparison failed for ${name}:`, error);
+    // Use Playwright Node API instead of spawn
+    const browser = await chromium.launch({ headless: false });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+    const currentPath = path.join('current', `${name}.png`);
+    await page.screenshot({ path: currentPath, fullPage: true });
+    await browser.close();
+    const baselinePath = path.join('baseline', `${name}.png`);
+    // Check if images exist
+    if (!fs.existsSync(baselinePath) || !fs.existsSync(currentPath)) {
       return {
         testName: name,
         status: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Baseline or current screenshot missing',
       };
     }
+    // Generate diff image
+    const diffPath = await highlightDiff(baselinePath, currentPath, 'diffimage');
+    
+    // Get AI insights using Groq
+    const aiInsights = await compareScreenshotsWithGroqLlava(
+      baselinePath, 
+      currentPath, 
+      process.env.GROK_API_KEY
+    );
+
+    // Calculate differences (simplified)
+    const pixelDifference = Math.floor(Math.random() * 1000); // Replace with actual calculation
+    const percentageDifference = Math.floor(Math.random() * 10); // Replace with actual calculation
+
+    // Create test result
+    const testResult = await storage.createTestResult({
+      runId,
+      testName: name,
+      status: percentageDifference < 5 ? 'passed' : 'failed',
+      duration: Date.now() - startTime,
+      baselineImagePath: baselinePath,
+      actualImagePath: currentPath,
+      diffImagePath: diffPath,
+      pixelDifference,
+      percentageDifference,
+      aiInsights: { analysis: aiInsights }
+    });
+
+    // Create AI insight
+    await storage.createAiInsight({
+      testResultId: testResult.id,
+      type: 'visual_comparison',
+      title: `Visual Analysis for ${name}`,
+      description: aiInsights,
+      confidence: 85 + Math.floor(Math.random() * 15),
+      severity: percentageDifference > 5 ? 'error' : 'info',
+      metadata: { diffPercentage: percentageDifference }
+    });
+
+    return {
+      testName: name,
+      status: percentageDifference < 5 ? 'passed' : 'failed',
+      baselineImage: baselinePath,
+      actualImage: currentPath,
+      diffImage: diffPath,
+      aiInsights
+    };
+
   }
 
   async getTestStatus(runId: string) {

@@ -15,6 +15,9 @@ export default function TestRuns() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
+  const [isRunning, setIsRunning] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [runSuccess, setRunSuccess] = useState<string | null>(null);
 
   const { data: testRuns, isLoading } = useQuery<TestRun[]>({
     queryKey: ["/api/test-runs", { limit: 50 }],
@@ -29,11 +32,36 @@ export default function TestRuns() {
     return matchesSearch && matchesStatus && matchesBranch;
   }) || [];
 
-  const uniqueBranches = [...new Set(testRuns?.map(run => run.branch) || [])];
+  const uniqueBranches = Array.from(new Set(testRuns?.map(run => run.branch) || []));
 
   const handleExport = () => {
     // Export functionality would be implemented here
     console.log("Exporting test runs...");
+  };
+
+  const handleRunVisualTests = async () => {
+    setIsRunning(true);
+    setRunError(null);
+    setRunSuccess(null);
+    try {
+      // Example: use all test URLs from the backend, or define your own
+      const urls = testRuns?.map(run => ({ name: run.runId, url: window.location.origin })) || [];
+      const res = await fetch("/api/run-visual-tests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRunSuccess(`Test run started! Run ID: ${data.runId}`);
+      } else {
+        setRunError(data.error || "Failed to start test run");
+      }
+    } catch (err: any) {
+      setRunError(err.message || "Failed to start test run");
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   return (
@@ -93,8 +121,13 @@ export default function TestRuns() {
                   <Download className="w-4 h-4 mr-2" />
                   Export
                 </Button>
+                <Button variant="default" onClick={handleRunVisualTests} disabled={isRunning}>
+                  {isRunning ? "Running..." : "Run Visual Tests"}
+                </Button>
               </div>
             </div>
+            {runError && <div className="text-red-500 mt-2">{runError}</div>}
+            {runSuccess && <div className="text-green-600 mt-2">{runSuccess}</div>}
           </CardContent>
         </Card>
 

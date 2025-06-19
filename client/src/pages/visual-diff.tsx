@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { MainLayout } from "@/components/layout/main-layout";
 import { ComparisonViewer } from "@/components/visual-diff/comparison-viewer";
 import { DiffControls } from "@/components/visual-diff/diff-controls";
@@ -8,121 +9,79 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import type { TestResult } from "@shared/schema";
 import type { ScreenshotComparison, ComparisonMode } from "@/types";
+import React from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export default function VisualDiff() {
-  const { toast } = useToast();
-  const [selectedResult, setSelectedResult] = useState<number | null>(null);
-  const [comparisonMode, setComparisonMode] = useState<ComparisonMode>({
-    id: 'side-by-side',
-    name: 'Side by Side',
-    description: 'View baseline and actual side by side'
-  });
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [diffImages, setDiffImages] = useState<string[]>([
+    // ...existing filenames...
+  ]);
 
-  const { data: failedResults, isLoading } = useQuery<TestResult[]>({
-    queryKey: ["/api/test-results/failed"],
-  });
-
-  const { data: currentResult } = useQuery<TestResult>({
-    queryKey: ["/api/test-results", selectedResult],
-    enabled: !!selectedResult,
-  });
-
-  const mockComparison: ScreenshotComparison = {
-    baseline: "/api/screenshots/baseline/test.png",
-    actual: "/api/screenshots/actual/test.png",
-    diff: "/api/screenshots/diff/test.png",
-    regions: [
-      { x: 100, y: 150, width: 200, height: 50, severity: 'high' },
-      { x: 50, y: 300, width: 150, height: 30, severity: 'medium' },
-    ],
-  };
-
-  const handleAccept = () => {
-    if (!currentResult) return;
-    
-    toast({
-      title: "Changes Accepted",
-      description: "The visual changes have been accepted and the baseline has been updated.",
-    });
-  };
-
-  const handleReject = () => {
-    if (!currentResult) return;
-    
-    toast({
-      title: "Changes Rejected",
-      description: "The visual changes have been rejected.",
-      variant: "destructive",
-    });
-  };
-
-  const handleFlag = () => {
-    if (!currentResult) return;
-    
-    toast({
-      title: "Test Flagged",
-      description: "The test has been flagged for review.",
-    });
+  const handleDeleteImage = (filename: string) => {
+    setDiffImages((prev) => prev.filter((img) => img !== filename));
   };
 
   return (
-    <MainLayout
-      title="Visual Diff"
-      description="Compare and analyze visual differences"
+    <MainLayout title={""} description={""}      // ...existing props...
     >
       <div className="space-y-6">
-        {/* Test Selection */}
-        <Card className="visionx-card">
+        {/* ...existing components... */}
+        <Card className="visionx-card mt-4">
           <CardHeader>
-            <CardTitle>Select Test Result to Compare</CardTitle>
+            <CardTitle>All Diff Images</CardTitle>
           </CardHeader>
           <CardContent>
-            <Select
-              value={selectedResult?.toString() || ""}
-              onValueChange={(value) => setSelectedResult(parseInt(value))}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a failed test to analyze..." />
-              </SelectTrigger>
-              <SelectContent>
-                {failedResults?.map((result) => (
-                  <SelectItem key={result.id} value={result.id.toString()}>
-                    {result.testName} - {result.runId}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {diffImages.map((filename, idx) => (
+                <div key={filename} className="flex flex-col items-center bg-gray-50 rounded-lg shadow p-4">
+                  <img
+                    src={`/diffimage/${filename}`}
+                    alt={`Diff ${idx + 1}`}
+                    className="rounded border border-gray-300 max-w-full max-h-64 mb-2 shadow-lg cursor-pointer"
+                    onClick={() => setPreviewImage(`/diffimage/${filename}`)}
+                  />
+                  <div className="text-xs text-muted-foreground font-mono break-all mb-2">{filename}</div>
+                  <div className="flex gap-2">
+                    <button
+                      className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                      onClick={() => setPreviewImage(`/diffimage/${filename}`)}
+                    >
+                      Preview
+                    </button>
+                    <button
+                      className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                      onClick={() => handleDeleteImage(filename)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Preview Modal */}
+            <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+              <DialogContent>
+                <div className="flex flex-col items-center">
+                  {previewImage && (
+                    <img
+                      src={previewImage}
+                      alt="Preview"
+                      style={{ maxWidth: "90vw", maxHeight: "70vh", display: "block" }}
+                    />
+                  )}
+                  <button
+                    className="mt-4 px-4 py-2 bg-gray-700 text-white rounded"
+                    onClick={() => setPreviewImage(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
-
-        {currentResult && (
-          <>
-            {/* Comparison Viewer */}
-            <ComparisonViewer
-              comparison={mockComparison}
-              mode={comparisonMode}
-              onModeChange={setComparisonMode}
-            />
-
-            {/* Diff Controls */}
-            <DiffControls
-              testResult={currentResult}
-              onAccept={handleAccept}
-              onReject={handleReject}
-              onFlag={handleFlag}
-            />
-          </>
-        )}
-
-        {!currentResult && !isLoading && (
-          <Card className="visionx-card">
-            <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground">
-                Select a test result above to start comparing visual differences.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* ...existing components... */}
       </div>
     </MainLayout>
   );

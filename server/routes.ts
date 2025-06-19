@@ -262,6 +262,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Run Playwright tests from UI
+  app.post("/api/run-visual-tests", async (req, res) => {
+    try {
+      const { urls } = req.body;
+      if (!Array.isArray(urls)) {
+        return res.status(400).json({ error: "Missing or invalid 'urls' array" });
+      }
+      const { visualTestingService } = await import("./services/visualTestingService");
+      const runId = await visualTestingService.runVisualTests(urls);
+      res.json({ runId });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : "Unknown error" });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });

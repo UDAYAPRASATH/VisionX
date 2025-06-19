@@ -26,34 +26,54 @@ export function ComparisonViewer({ comparison, mode, onModeChange }: ComparisonV
   ];
 
   const renderComparison = () => {
+    const { baseline, actual, diff, regions } = comparison;
+    // Helper to render diff highlights
+    const renderRegions = () =>
+      regions?.map((region, idx) => (
+        <div
+          key={idx}
+          className={`absolute border-2 rounded border-${region.severity === 'critical' ? 'red' : region.severity === 'high' ? 'orange' : region.severity === 'medium' ? 'yellow' : 'blue'}-500`}
+          style={{
+            left: region.x,
+            top: region.y,
+            width: region.width,
+            height: region.height,
+            pointerEvents: 'none',
+            boxShadow: '0 0 8px 2px rgba(255,0,0,0.3)'
+          }}
+        />
+      ));
     switch (mode.id) {
       case 'side-by-side':
         return (
           <div className="grid grid-cols-2 gap-4 h-96">
-            <div className="relative">
+            <div className="relative h-full">
               <Badge className="absolute top-2 left-2 z-10 bg-blue-500 text-white">
                 Baseline
               </Badge>
-              <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg" />
+              <img src={baseline} alt="Baseline" className="w-full h-full object-contain rounded-lg" />
+              {renderRegions()}
             </div>
-            <div className="relative">
+            <div className="relative h-full">
               <Badge className="absolute top-2 left-2 z-10 bg-orange-500 text-white">
                 Actual
               </Badge>
-              <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 rounded-lg" />
+              <img src={actual} alt="Actual" className="w-full h-full object-contain rounded-lg" />
+              {renderRegions()}
             </div>
           </div>
         );
-
       case 'slider':
         return (
           <div className="relative h-96">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg" />
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 rounded-lg"
+            <img src={baseline} alt="Baseline" className="absolute inset-0 w-full h-full object-contain rounded-lg" />
+            <img
+              src={actual}
+              alt="Actual"
+              className="absolute inset-0 w-full h-full object-contain rounded-lg"
               style={{ clipPath: `inset(0 ${100 - sliderValue[0]}% 0 0)` }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
+            {renderRegions()}
             <div className="absolute bottom-4 left-4 right-4">
               <Slider
                 value={sliderValue}
@@ -68,21 +88,23 @@ export function ComparisonViewer({ comparison, mode, onModeChange }: ComparisonV
             </Badge>
           </div>
         );
-
       case 'overlay':
         return (
           <div className="relative h-96">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg" />
+            <img src={baseline} alt="Baseline" className="absolute inset-0 w-full h-full object-contain rounded-lg" />
             <AnimatePresence>
               {showOverlay && (
-                <motion.div
+                <motion.img
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.7 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 rounded-lg"
+                  src={actual}
+                  alt="Actual Overlay"
+                  className="absolute inset-0 w-full h-full object-contain rounded-lg"
                 />
               )}
             </AnimatePresence>
+            {renderRegions()}
             <div className="absolute top-2 left-2 space-x-2">
               <Badge className="bg-blue-500 text-white">Baseline</Badge>
               {showOverlay && (
@@ -91,18 +113,17 @@ export function ComparisonViewer({ comparison, mode, onModeChange }: ComparisonV
             </div>
           </div>
         );
-
       case 'onion-skin':
         return (
           <div className="relative h-96">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg" />
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 rounded-lg opacity-50" />
+            <img src={baseline} alt="Baseline" className="absolute inset-0 w-full h-full object-contain rounded-lg" />
+            <img src={actual} alt="Actual" className="absolute inset-0 w-full h-full object-contain rounded-lg opacity-50" />
+            {renderRegions()}
             <Badge className="absolute top-2 left-2 bg-purple-500 text-white">
               Onion Skin
             </Badge>
           </div>
         );
-
       default:
         return null;
     }

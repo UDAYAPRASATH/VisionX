@@ -95,6 +95,7 @@ export class MemStorage implements IStorage {
       startedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
       completedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000 + 154 * 1000),
       metadata: null,
+      error: null
     };
 
     const testRun2: TestRun = {
@@ -109,6 +110,7 @@ export class MemStorage implements IStorage {
       startedAt: new Date(now.getTime() - 4 * 60 * 60 * 1000), // 4 hours ago
       completedAt: new Date(now.getTime() - 4 * 60 * 60 * 1000 + 118 * 1000),
       metadata: null,
+      error: null
     };
 
     const testRun3: TestRun = {
@@ -123,6 +125,7 @@ export class MemStorage implements IStorage {
       startedAt: new Date(now.getTime() - 6 * 60 * 60 * 1000), // 6 hours ago
       completedAt: null,
       metadata: null,
+      error: null
     };
 
     this.testRuns.set("#2847", testRun1);
@@ -143,6 +146,7 @@ export class MemStorage implements IStorage {
       percentageDifference: 312, // 3.12%
       aiInsights: null,
       createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+      error: null
     };
 
     const failedResult2: TestResult = {
@@ -158,6 +162,7 @@ export class MemStorage implements IStorage {
       percentageDifference: 89, // 0.89%
       aiInsights: null,
       createdAt: new Date(now.getTime() - 4 * 60 * 60 * 1000),
+      error: null
     };
 
     this.testResults.set(1, failedResult1);
@@ -248,6 +253,7 @@ export class MemStorage implements IStorage {
       completedAt: null,
       duration: insertTestRun.duration || null,
       metadata: insertTestRun.metadata || null,
+      error: insertTestRun.error || null,
     };
     this.testRuns.set(insertTestRun.runId, testRun);
     return testRun;
@@ -283,6 +289,7 @@ export class MemStorage implements IStorage {
       pixelDifference: insertTestResult.pixelDifference || null,
       percentageDifference: insertTestResult.percentageDifference || null,
       aiInsights: insertTestResult.aiInsights || null,
+      error: insertTestResult.error ?? null,
     };
     this.testResults.set(id, testResult);
     return testResult;
