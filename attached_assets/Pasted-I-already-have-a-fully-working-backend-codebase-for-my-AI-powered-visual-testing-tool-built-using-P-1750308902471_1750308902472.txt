@@ -1,0 +1,45 @@
+I already have a fully working backend codebase for my AI-powered visual testing tool, built using Playwright and TypeScript. It performs screenshot capture, baseline comparison, diff calculation using pixelmatch, and returns test result JSON with failure metadata. I want to build a world-class, premium-level UI for this product named ‘VisionX’.
+
+💡 This UI must be:
+
+Pixel-perfect, responsive, and elegant
+
+Built using Next.js + Tailwind CSS + ShadCN UI
+
+Enhanced with Framer Motion for micro-interactions and animations
+
+Developer-friendly, intuitive, and as polished as tools like Vercel, Linear, or Applitools
+
+🧠 Key Instruction (Important):
+
+✅ You must merge and integrate the existing backend logic (test result JSONs, screenshots folder structure, image diff logic) into this new UI without any failure or loss of functionality.
+✅ The UI must consume real test result data and reflect actual pass/fail outcomes — no dummy placeholders or broken flow.
+✅ Do not mock backend responses — the system should work with real screenshot folders like /baseline, /actual, /diff and test result files.
+
+🧩 Core UI Pages Required:
+
+VisionX Dashboard – Test summary, trend graph, failed count, heatmaps
+
+Test Runs Viewer – List of all runs with filters, screenshot previews, and status indicators
+
+Visual Diff Page – Real screenshot comparison using side-by-side, slider, or overlay view
+
+AI Insight Panel – Displays auto-generated visual issues like "Button shifted" or "Text cropped"
+
+Acceptance Panel – Users can accept/reject changes and update baselines
+
+Report Generator – Create and share test run summary PDFs or public links
+
+Settings & Roles – Theme switcher, API key manager, user roles
+
+🚀 Deployment & Integration:
+
+UI must be production-ready and easily deployed to Vercel or Netlify
+
+Should support loading images and JSON results from a local or remote backend
+
+All UI actions must reflect actual state changes from backend (e.g., accepting a failed diff should trigger baseline update)
+
+CI/CD ready for integration with Playwright test automation pipelines
+
+🎯 Final Goal: Build VisionX as a high-end, AI-powered visual testing UI that merges beautifully with my working backend, delivers a stunning user experience, and feels enterprise-level out of the box."
